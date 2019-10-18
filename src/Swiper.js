@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import { Animated, PanResponder, StyleSheet, View, ViewPropTypes } from 'react-native';
 
@@ -6,9 +6,7 @@ import DefaultControls from './Controls';
 
 const useNativeDriver = false; // because of RN #13377
 
-class Swiper extends React.Component {
-  children = (() => React.Children.toArray(this.props.children))();
-  count = (() => this.children.length)();
+class Swiper extends PureComponent {
 
   startAutoplay() {
     const { timeout } = this.props;
@@ -176,7 +174,7 @@ class Swiper extends React.Component {
   }
 
   _changeIndex(delta = 1) {
-    const { loop, vertical } = this.props;
+    const { loop, vertical, children: {length: count} } = this.props;
     const { width, height, activeIndex } = this.state;
 
     let toValue = { x: 0, y: 0 };
@@ -185,8 +183,8 @@ class Swiper extends React.Component {
 
     if (activeIndex <= 0 && delta < 0) {
       skipChanges = !loop;
-      calcDelta = this.count + delta;
-    } else if (activeIndex + 1 >= this.count && delta > 0) {
+      calcDelta = count + delta;
+    } else if (activeIndex + 1 >= count && delta > 0) {
       skipChanges = !loop;
       calcDelta = -1 * activeIndex + delta - 1;
     }
@@ -233,8 +231,10 @@ class Swiper extends React.Component {
       slideWrapperStyle,
       controlsEnabled,
       controlsProps,
+      children,
       Controls = DefaultControls,
     } = this.props;
+    const {length: count} = children;
 
     return (
       <View
@@ -249,7 +249,7 @@ class Swiper extends React.Component {
         >
           <Animated.View
             style={StyleSheet.flatten([
-              styles.swipeArea(vertical, this.count, width, height),
+              styles.swipeArea(vertical, count, width, height),
               swipeAreaStyle,
               {
                 transform: [{ translateX: pan.x }, { translateY: pan.y }],
@@ -257,7 +257,7 @@ class Swiper extends React.Component {
             ])}
             {...this._panResponder.panHandlers}
           >
-            {this.children.map((el, i) => (
+            {children.map((el, i) => (
               <View
                 key={i}
                 style={StyleSheet.flatten([
@@ -274,10 +274,10 @@ class Swiper extends React.Component {
               {...controlsProps}
               theme={theme}
               vertical={vertical}
-              count={this.count}
+              count={count}
               activeIndex={this.getActiveIndex()}
               isFirst={!loop && !this.getActiveIndex()}
-              isLast={!loop && this.getActiveIndex() + 1 >= this.count}
+              isLast={!loop && this.getActiveIndex() + 1 >= count}
               goToPrev={this.goToPrev}
               goToNext={this.goToNext}
               goTo={this.goTo}
